@@ -4,7 +4,7 @@ from keras.models import load_model
 from PIL import Image, ImageOps
 import cv2
 import streamlit_drawable_canvas as draw
-
+import tensorflow as tf
 # Load the trained MNIST model
 model = load_model('mnist_model.keras', compile=False)
 
@@ -26,8 +26,12 @@ def predict_digit(image):
     return digit, confidence
 
 # Streamlit UI
+
 st.title("🖌 Handwritten Digit Recognition")
-st.markdown("Draw a digit below and click **Recognize** to predict.")
+st.markdown("Draw a digit below or upload a photo and click **Recognize** to predict.")
+
+# File uploader for photo input
+uploaded_file = st.file_uploader("Or upload a photo of a digit (PNG/JPG)", type=["png", "jpg", "jpeg"])
 
 # Session state flag to reset canvas
 if "clear_canvas" not in st.session_state:
@@ -53,13 +57,25 @@ canvas_result = draw.st_canvas(
 # Reset the flag after canvas is created
 st.session_state.clear_canvas = True
 
+
 # Recognize button
 if st.button("Recognize"):
-    if canvas_result.image_data is not None:
-        img = canvas_result.image_data.astype(np.uint8)
-        img = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
-        img = Image.fromarray(img)
+    img = None
+    # If user uploaded a file, use that
+    if uploaded_file is not None:
+        try:
+            img = Image.open(uploaded_file)
+        except Exception as e:
+            st.error("Error loading image. Please upload a valid PNG/JPG file.")
+            img = None
+    # Otherwise, use canvas
+    elif canvas_result.image_data is not None:
+        img_array = canvas_result.image_data.astype(np.uint8)
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2GRAY)
+        img = Image.fromarray(img_array)
+    # If we have an image, predict
+    if img is not None:
         digit, confidence = predict_digit(img)
         st.success(f"Predicted Digit: {digit} with {confidence}% confidence")
     else:
-        st.warning("Please draw a digit before clicking Recognize.")
+        st.warning("Please draw a digit or upload a photo before clicking Recognize.")
