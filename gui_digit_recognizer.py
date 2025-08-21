@@ -6,7 +6,7 @@ import cv2
 import streamlit_drawable_canvas as draw
 
 # Load the trained MNIST model
-model = load_model('/Users/rajeshpandey/Desktop/AI_all/ML(hw)/Deep_learning/mnist_model.keras', compile=False)
+model = load_model('mnist_model.keras', compile=False)
 
 # Preprocess image
 def preprocess_image(image):
